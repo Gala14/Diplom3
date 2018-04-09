@@ -19,6 +19,7 @@ class Vector {
 }
 
 class Actor {
+  // аргуменрты функции лучше писать в одну строчку, иначе сливаются с кодом
   constructor(
     position = new Vector(0, 0),
     size = new Vector(1, 1),
@@ -27,6 +28,7 @@ class Actor {
       !(position instanceof Vector) ||
       !(size instanceof Vector) ||
       !(speed instanceof Vector)) {
+      // если выбрасываете исключение, всегда пишите сообщение об ошибке
       throw new Error();
     }
     this.pos = position;
@@ -61,6 +63,9 @@ class Actor {
     if (!(actor instanceof Actor) || actor === undefined) {
       throw new Error();
     }
+
+    // это выражение лучше разбить на 2, первое сравнивает actor с this
+    // второе - всё остальное
     if (
       actor === this ||
       actor.bottom <= this.top ||
@@ -76,18 +81,25 @@ class Actor {
 
 class Level {
   constructor(grid = [], actors = []) {
+    // здесь лучше создать копии массивов, чтобы поля объекта нельзя было изменить извне
     this.grid = grid;
     this.actors = actors;
+    // тут можно написать this.player = actors.find(... (без this, чтобы было короче)
+    // также тут лучше использовать стрелочную функцию
     this.player = this.actors.find(function (x) {
       return x.type === 'player';
     });
+    // тут тоже grid без this было бы короче
     this.height = this.grid.length;
+    // вот это очень хорошо
     this.width = Math.max(0, ...this.grid.map(x => x.length));
     this.status = null;
     this.finishDelay = 1;
   }
 
   isFinished() {
+    // если у вас if (expr) { return true; } else { return false; } и expr это true или false
+    // то лучше писать просто return expr;
     if (this.status !== null && this.finishDelay < 0) {
       return true;
     }
@@ -95,9 +107,12 @@ class Level {
   }
 
   actorAt(actor) {
+    // вторая проверка лишняя - undefined instanceof Actor === false
     if (!(actor instanceof Actor) || actor === undefined) {
+      // сообщение об ошибке
       throw new Error();
     }
+    // стрелочная функция
     return this.actors.find(function (x) {
       return x.isIntersect(actor)
     });
@@ -105,6 +120,7 @@ class Level {
 
   obstacleAt(position, size) {
     if (!(position instanceof Vector) || !(size instanceof Vector)) {
+      // сообщение об ошибке
       return new Error();
     }
 
@@ -115,17 +131,25 @@ class Level {
     if (actor.left < 0 || actor.top < 0 || actor.right > this.width) {
       return 'wall';
     }
+    // тут что-то не так, округлений не хватает,
+    // возьмете уровни из levels.json и проверьте правильно ли ведёт себя игра
     for (let x = Math.floor(actor.left); x < actor.right; x++) {
       for (let y = Math.floor(actor.top); y < actor.bottom; y++) {
+        // this.grid[y][x] лучше записать в переменную
+        // и в качестве проверки достаточно if (this.grid[y][x])
         if (this.grid[y][x] !== undefined) {
           return this.grid[y][x];
         }
       }
     }
+    // лишняя строчка, функция возвращает undefined если не указано другое
     return undefined;
   }
 
   removeActor(actor) {
+    // если значение присваивается переменной один раз, то лучше использовать const вместо let
+    // тут вместо findIndex можно использовать другой метод массива,
+    // который принимает объект вместо функции обратного вызова
     let index = this.actors.findIndex(x => x === actor);
     if (index !== -1) {
       this.actors.splice(index, 1);
@@ -144,6 +168,8 @@ class Level {
       this.status = 'lost';
       return;
     }
+
+    // actor !== undefined можно заменить на просто actor (короче)
     if (type === 'coin' && actor !== undefined && actor.type === 'coin') {
       this.removeActor(actor);
       if (this.noMoreActors('coin')) {
@@ -154,8 +180,11 @@ class Level {
 }
 
 class LevelParser {
+  // diction лучше сокращать до dict или вообще не сокращать
   constructor(diction) {
+    // это лучше задать через значение аргумента по-умолчанию
     if (diction === undefined) {
+      // тут должно быть другое значение
       this.diction = [];
     } else {
       this.diction = diction;
@@ -163,6 +192,7 @@ class LevelParser {
   }
 
   actorFromSymbol(char) {
+    // проверка лишняя (если её убрать ничего не изменится)
     if (char !== undefined) {
       return this.diction[char];
     }
@@ -175,6 +205,7 @@ class LevelParser {
         return 'wall';
       case '!':
         return 'lava';
+      // default можно убрать
       default:
         return undefined;
     }
@@ -185,6 +216,7 @@ class LevelParser {
     for (let i = 0; i < strings.length; i++) {
       let cells = [];
       for (let y = 0; y < strings[i].length; y++) {
+        // вместо charAt можно использовать доступ по индексу в массиве
         cells.push(this.obstacleFromSymbol(strings[i].charAt(y)));
       }
       grid.push(cells);
@@ -193,10 +225,13 @@ class LevelParser {
   }
 
   createActors(strs) {
+    // если значение присваивается переменной один раз, то лучше использовать const
     let actors = [];
     for (let i = 0; i < strs.length; i++) {
       for (let j = 0; j < strs[i].length; j++) {
+        // const
         let actor = this.actorFromSymbol(strs[i].charAt(j));
+        // первую половину проверки можно убрать
         if (actor !== undefined && typeof actor === 'function') {
           let inst = new actor(new Vector(j, i));
           if (inst instanceof Actor) {
@@ -231,6 +266,7 @@ class Fireball extends Actor {
   }
 
   act(time, level) {
+    // const
     let newPosition = this.getNextPosition(time);
     if (level.obstacleAt(newPosition, this.size)) {
       this.handleObstacle();
@@ -297,6 +333,7 @@ class Coin extends Actor {
 class Player extends Actor {
   constructor(pos = new Vector(0, 0)) {
     super(pos.plus(new Vector(0, -0.5)), new Vector(0.8, 1.5), new Vector(0, 0));
+    // лишняя строчка
     this.posStart = this.pos;
   }
 
@@ -314,6 +351,7 @@ const actorDict = {
 
 };
 
+// возьмите схемы уровней из levels.json
 const schemas = [
   [
     '         ',
