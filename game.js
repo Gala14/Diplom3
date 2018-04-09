@@ -8,7 +8,7 @@ class Vector {
 	
 	plus(vector) {
 		if (!(vector instanceof Vector)) {
-			throw new Error('Можно прибавлять к вектору только вектор типа Vector');
+			throw new Error('ГЊГ®Г¦Г­Г® ГЇГ°ГЁГЎГ ГўГ«ГїГІГј ГЄ ГўГҐГЄГІГ®Г°Гі ГІГ®Г«ГјГЄГ® ГўГҐГЄГІГ®Г° ГІГЁГЇГ  Vector');
 		}
     return new Vector(this.x + vector.x, this.y + vector.y);
 	}
@@ -29,7 +29,7 @@ class Actor {
 			  !(speed instanceof Vector)) {
 			    throw new Error();
 		  }
-    this.pos = position;
+      this.pos = position;
 	  this.size = size;
 	  this.speed = speed;
 	}
@@ -54,21 +54,21 @@ class Actor {
   act() {
     
   }
-	isIntersect(actor) {
-		if (!(actor instanceof Actor) || actor === undefined) {
-			throw new Error();
-		}
-		if (
-			actor === this ||
-			actor.bottom <= this.top ||
-			actor.left >= this.right ||
-			actor.top >= this.bottom ||
-			actor.right <= this.left
-		) {
-			return false;
-		}
-		return true;
+  isIntersect(actor) {
+	if (!(actor instanceof Actor) || actor === undefined) {
+	   throw new Error();
 	}
+	if (
+		actor === this ||
+		actor.bottom <= this.top ||
+		actor.left >= this.right ||
+		actor.top >= this.bottom ||
+		actor.right <= this.left
+		) {
+		return false;
+		}
+	return true;
+  }
 }
 
 class Level {
@@ -298,3 +298,42 @@ class Player extends Actor {
     return 'player';
   }
 }
+
+const actorDict = {
+  '@': Player,
+  'v': FireRain,
+  'o': Coin,
+  '=': HorizontalFireball,
+  '|': VerticalFireball
+
+};
+
+const schemas = [
+  [
+    '         ',
+    '         ',
+    '    =    ',
+    '       o ',
+    '     !xxx',
+    ' @       ',
+    'xxx!     ',
+    '         '
+  ],
+  [
+    '      v  ',
+    '    v    ',
+    '  v      ',
+    '        o',
+    '        x',
+    '@   x    ',
+    'x        ',
+    '         '
+  ]
+];
+
+const parser = new LevelParser(actorDict);
+runGame(schemas, parser, DOMDisplay)
+  .then(() => console.log('Р’С‹ РІС‹РёРіСЂР°Р»Рё РїСЂРёР·!'));
+
+
+
