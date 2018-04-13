@@ -19,17 +19,9 @@ class Vector {
 }
 
 class Actor {
-  // аргуменрты функции лучше писать в одну строчку, иначе сливаются с кодом
-  constructor(
-    position = new Vector(0, 0),
-    size = new Vector(1, 1),
-    speed = new Vector(0, 0)) {
-    if (
-      !(position instanceof Vector) ||
-      !(size instanceof Vector) ||
-      !(speed instanceof Vector)) {
-      // если выбрасываете исключение, всегда пишите сообщение об ошибке
-      throw new Error();
+  constructor(position = new Vector(0, 0), size = new Vector(1, 1), speed = new Vector(0, 0)) {
+    if (!(position instanceof Vector) || !(size instanceof Vector) || !(speed instanceof Vector)) {
+      throw new Error('Объект не является объектом типа Vector');
     }
     this.pos = position;
     this.size = size;
@@ -61,18 +53,12 @@ class Actor {
 
   isIntersect(actor) {
     if (!(actor instanceof Actor) || actor === undefined) {
-      throw new Error();
+      throw new Error('Объект не является объектом типа Actor');
     }
-
-    // это выражение лучше разбить на 2, первое сравнивает actor с this
-    // второе - всё остальное
-    if (
-      actor === this ||
-      actor.bottom <= this.top ||
-      actor.left >= this.right ||
-      actor.top >= this.bottom ||
-      actor.right <= this.left
-    ) {
+    if (actor === this) {
+      return false;
+    }
+    if (actor.bottom <= this.top || actor.left >= this.right || actor.top >= this.bottom || actor.right <= this.left) {
       return false;
     }
     return true;
@@ -81,47 +67,29 @@ class Actor {
 
 class Level {
   constructor(grid = [], actors = []) {
-    // здесь лучше создать копии массивов, чтобы поля объекта нельзя было изменить извне
-    this.grid = grid;
-    this.actors = actors;
-    // тут можно написать this.player = actors.find(... (без this, чтобы было короче)
-    // также тут лучше использовать стрелочную функцию
-    this.player = this.actors.find(function (x) {
-      return x.type === 'player';
-    });
-    // тут тоже grid без this было бы короче
-    this.height = this.grid.length;
-    // вот это очень хорошо
+    this.grid = grid.slice();
+    this.actors = actors.slice();
+    this.player = actors.find(actor => actor.type === 'player');
+    this.height = grid.length;
     this.width = Math.max(0, ...this.grid.map(x => x.length));
     this.status = null;
     this.finishDelay = 1;
   }
 
   isFinished() {
-    // если у вас if (expr) { return true; } else { return false; } и expr это true или false
-    // то лучше писать просто return expr;
-    if (this.status !== null && this.finishDelay < 0) {
-      return true;
-    }
-    return false;
+    return (this.status !== null) && (this.finishDelay < 0);
   }
 
   actorAt(actor) {
-    // вторая проверка лишняя - undefined instanceof Actor === false
-    if (!(actor instanceof Actor) || actor === undefined) {
-      // сообщение об ошибке
-      throw new Error();
+    if (!(actor instanceof Actor)) {
+      throw new Error('Объект не является объектом типа Actor');
     }
-    // стрелочная функция
-    return this.actors.find(function (x) {
-      return x.isIntersect(actor)
-    });
+     return this.actors.find(x => x.isIntersect(actor));
   }
 
   obstacleAt(position, size) {
     if (!(position instanceof Vector) || !(size instanceof Vector)) {
-      // сообщение об ошибке
-      return new Error();
+      return new Error('Объект не является объектом типа Vector');
     }
 
     let actor = new Actor(position, size);
@@ -133,24 +101,18 @@ class Level {
     }
     // тут что-то не так, округлений не хватает,
     // возьмете уровни из levels.json и проверьте правильно ли ведёт себя игра
-    for (let x = Math.floor(actor.left); x < actor.right; x++) {
-      for (let y = Math.floor(actor.top); y < actor.bottom; y++) {
-        // this.grid[y][x] лучше записать в переменную
-        // и в качестве проверки достаточно if (this.grid[y][x])
-        if (this.grid[y][x] !== undefined) {
-          return this.grid[y][x];
+    for (let x = Math.floor(actor.left); x < Math.ceil(actor.right); x++) {
+      for (let y = Math.floor(actor.top); y < Math.ceil(actor.bottom); y++) {
+        var gridType = this.grid[y][x];
+        if (gridType) {
+          return gridType;
         }
       }
     }
-    // лишняя строчка, функция возвращает undefined если не указано другое
-    return undefined;
   }
 
   removeActor(actor) {
-    // если значение присваивается переменной один раз, то лучше использовать const вместо let
-    // тут вместо findIndex можно использовать другой метод массива,
-    // который принимает объект вместо функции обратного вызова
-    let index = this.actors.findIndex(x => x === actor);
+   const index = this.actors.indexOf(actor); 
     if (index !== -1) {
       this.actors.splice(index, 1);
     }
@@ -168,9 +130,7 @@ class Level {
       this.status = 'lost';
       return;
     }
-
-    // actor !== undefined можно заменить на просто actor (короче)
-    if (type === 'coin' && actor !== undefined && actor.type === 'coin') {
+    if (type === 'coin' && actor && actor.type === 'coin') {
       this.removeActor(actor);
       if (this.noMoreActors('coin')) {
         this.status = 'won';
@@ -180,23 +140,18 @@ class Level {
 }
 
 class LevelParser {
-  // diction лучше сокращать до dict или вообще не сокращать
-  constructor(diction) {
+  constructor(dict) {
     // это лучше задать через значение аргумента по-умолчанию
-    if (diction === undefined) {
+    if (dict === undefined) {
       // тут должно быть другое значение
-      this.diction = [];
+      this.dict = [];
     } else {
-      this.diction = diction;
+      this.dict = dict;
     }
   }
 
   actorFromSymbol(char) {
-    // проверка лишняя (если её убрать ничего не изменится)
-    if (char !== undefined) {
-      return this.diction[char];
-    }
-    return undefined;
+        return this.dict[char];
   }
 
   obstacleFromSymbol(char) {
@@ -205,34 +160,27 @@ class LevelParser {
         return 'wall';
       case '!':
         return 'lava';
-      // default можно убрать
-      default:
-        return undefined;
     }
   }
 
   createGrid(strings) {
-    let grid = [];
+     let grid = [];
     for (let i = 0; i < strings.length; i++) {
-      let cells = [];
+      grid[i] = [];
       for (let y = 0; y < strings[i].length; y++) {
-        // вместо charAt можно использовать доступ по индексу в массиве
-        cells.push(this.obstacleFromSymbol(strings[i].charAt(y)));
+        grid[i][y] = this.obstacleFromSymbol(strings[i][y]);
       }
-      grid.push(cells);
     }
     return grid;
   }
 
   createActors(strs) {
-    // если значение присваивается переменной один раз, то лучше использовать const
-    let actors = [];
+    const actors = [];
     for (let i = 0; i < strs.length; i++) {
       for (let j = 0; j < strs[i].length; j++) {
         // const
         let actor = this.actorFromSymbol(strs[i].charAt(j));
-        // первую половину проверки можно убрать
-        if (actor !== undefined && typeof actor === 'function') {
+        if (typeof actor === 'function') {
           let inst = new actor(new Vector(j, i));
           if (inst instanceof Actor) {
             actors.push(inst);
@@ -333,7 +281,6 @@ class Coin extends Actor {
 class Player extends Actor {
   constructor(pos = new Vector(0, 0)) {
     super(pos.plus(new Vector(0, -0.5)), new Vector(0.8, 1.5), new Vector(0, 0));
-    // лишняя строчка
     this.posStart = this.pos;
   }
 
@@ -342,16 +289,6 @@ class Player extends Actor {
   }
 }
 
-const actorDict = {
-  '@': Player,
-  'v': FireRain,
-  'o': Coin,
-  '=': HorizontalFireball,
-  '|': VerticalFireball
-
-};
-
-// возьмите схемы уровней из levels.json
 const schemas = [
   [
     '         ',
@@ -374,10 +311,10 @@ const schemas = [
     '         '
   ]
 ];
-
+const actorDict = {
+  '@': Player,
+  'v': FireRain
+}
 const parser = new LevelParser(actorDict);
 runGame(schemas, parser, DOMDisplay)
   .then(() => console.log('Вы выиграли приз!'));
-
-
-
