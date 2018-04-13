@@ -140,12 +140,8 @@ class Level {
 }
 
 class LevelParser {
-  constructor(dict) {
+  constructor(dict = {}) {
     // это лучше задать через значение аргумента по-умолчанию
-    if (dict === undefined) {
-      // тут должно быть другое значение
-      this.dict = [];
-    } else {
       this.dict = dict;
     }
   }
