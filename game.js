@@ -143,11 +143,11 @@ class LevelParser {
   constructor(dict = {}) {
     // это лучше задать через значение аргумента по-умолчанию
       this.dict = dict;
-    }
-  }
+ }
+  
 
   actorFromSymbol(char) {
-        return this.dict[char];
+    return this.dict[char];
   }
 
   obstacleFromSymbol(char) {
@@ -285,32 +285,18 @@ class Player extends Actor {
   }
 }
 
-const schemas = [
-  [
-    '         ',
-    '         ',
-    '    =    ',
-    '       o ',
-    '     !xxx',
-    ' @       ',
-    'xxx!     ',
-    '         '
-  ],
-  [
-    '      v  ',
-    '    v    ',
-    '  v      ',
-    '        o',
-    '        x',
-    '@   x    ',
-    'x        ',
-    '         '
-  ]
-];
 const actorDict = {
   '@': Player,
-  'v': FireRain
+  'v': FireRain,
+  'o': Coin,
+  '=': HorizontalFireball,
+  '|': VerticalFireball
 }
 const parser = new LevelParser(actorDict);
-runGame(schemas, parser, DOMDisplay)
-  .then(() => console.log('Вы выиграли приз!'));
+
+loadLevels()
+  .then((res) => {
+    console.log(JSON.parse(res));
+    runGame(JSON.parse(res), parser, DOMDisplay)
+     .then(() => console.log('Вы выиграли!'))
+  });
